@@ -4,8 +4,21 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { dummyInterviews } from '@/constants'
 import InterviewCard from '@/components/InterviewCard'
+import { getCurrentUser, getInterviewByUserId, getLatestInterviews } from '@/lib/actions/auth.action'
 
-const page = () => {
+
+const page =async () => {
+
+  const user = await getCurrentUser();
+  //Allows you to fetch multiple promises in parallel
+  const [userInterviews,latestInterviews] = await Promise.all([
+      await getInterviewByUserId(user?.id!),
+      await getLatestInterviews({userId:user?.id!})
+  ]);
+  
+
+  const hasPastInterviews = (userInterviews?.length ?? 0) > 0;
+  const hasUpcomingInterviews = latestInterviews?.length!=0;
   return (
     <>
     <section className='card-cta'>
@@ -23,7 +36,7 @@ const page = () => {
           Get ready for your next job interview with AI Recruiter <span role="img" aria-label="rocket">🚀</span>
         </p>
         <Button asChild className='btn-primary w-full max-sm:w-auto flex items-center justify-center'>
-            <Link href="/Interview">Start an Interview <span role="img" aria-label="handshake">🤝</span>
+            <Link href="/interview">Start an Interview <span role="img" aria-label="handshake">🤝</span>
             </Link>
         </Button>
       </div>
@@ -34,11 +47,20 @@ const page = () => {
       <h2>Your Past Interviews</h2>
 
       <div className='interviews-section'>
-        {dummyInterviews.map((interview)=>{
-          return(
-            <InterviewCard {...interview} key={interview.id}/>
-          )
-        })}
+
+        { hasPastInterviews ?(
+          userInterviews?.map((interview)=>(
+            (
+              <InterviewCard {...interview} key={interview.id}/>
+            )
+          ))
+        ) : (
+          <div className='flex flex-col items-center justify-center gap-4'>
+            <Image src="/empty-interviews.png" alt="no-interviews" width={200} height={200} className='object-cover'/>
+            <p className='text-lg text-gray-100'>You have no past interviews yet. Start one now!</p>
+          </div>
+        )
+        }
       </div>
 
     </section>
@@ -47,11 +69,21 @@ const page = () => {
       <h2>Take an Interview</h2>
       <div className='interviews-section'>
         <div className='interviews-section'>
-        {dummyInterviews.map((interview)=>{
-          return(
-            <InterviewCard {...interview} key={interview.id}/>
-          )
-        })}
+
+        { hasUpcomingInterviews ?(
+          latestInterviews?.map((interview)=>(
+            (
+              <InterviewCard {...interview} key={interview.id}/>
+            )
+          ))
+        ) : (
+          <div className='flex flex-col items-center justify-center gap-4'>
+            <Image src="/empty-interviews.png" alt="no-interviews" width={200} height={200} className='object-cover'/>
+            <p className='text-lg text-gray-100'>There are no upcoming interviews available at the moment. Check back later or start your own interview! <span role="img" aria-label="hourglass">⏳</span>
+            </p>
+          </div>
+        )
+        }
       </div>
         
       </div>
