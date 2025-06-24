@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { vapi} from '@/lib/vapi.sdk';
+import { interviewer } from '@/constants';
 
 enum CallStatus{
   INACTIVE ='INACTIVE',
@@ -17,13 +18,13 @@ interface SavedMessage{
   content:string;
 }
 
-interface AgentProps {
-  userName: string;
-  userId: string;
-  type: string;
-}
+// interface AgentProps {
+//   userName: string;
+//   userId: string;
+//   type: string;
+// }
 
-const Agent = ({userName,userId,type}:AgentProps) => {
+const Agent = ({userName,userId,type,interviewId,questions}:AgentProps) => {
 
   const router = useRouter();
 
@@ -31,7 +32,7 @@ const Agent = ({userName,userId,type}:AgentProps) => {
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages,setMessages] = useState<SavedMessage[]>([]);
 
-  useEffect(()=>{
+useEffect(()=>{
     const onCallStart = ()=>{
       console.log('Call started');
       setCallStatus(CallStatus.ACTIVE);
@@ -101,15 +102,32 @@ const Agent = ({userName,userId,type}:AgentProps) => {
     }
   },[])
 
-  useEffect(()=>{
-    if(callStatus === CallStatus.FINISHED) {
-      console.log('Redirecting to home page');
-      // Add a small delay before redirect
-      setTimeout(() => {
-        router.push('/');
-      }, 1000);
+const handleGenerateFeedback = async(messages:SavedMessage[])=>{
+    console.log('Generating feedback for messages:', messages);
+    //Create a server action that generates feedback based on the messages:
+    const {success,id,}={
+      success:true,
+      id:'feedback-id'
     }
-  },[callStatus, router]);
+
+    if(success && id){
+      router.push(`/interview/${interviewId}/feedback`);
+    }else{
+      console.error('Error saving feedback');
+      router.push('/');
+    }
+}
+
+ useEffect(()=>{
+      if(callStatus === CallStatus.FINISHED){
+        if(type === 'generate'){
+          router.push('/');
+        }else{
+          handleGenerateFeedback(messages);
+          
+        }
+      }
+ },[messages,callStatus,type,userId])
 
   const handleCall = async()=>{
     try {
@@ -133,26 +151,27 @@ const Agent = ({userName,userId,type}:AgentProps) => {
       console.log('Attempting to start call...');
       
       // Option 1: Using workflow ID (current approach)
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, {
+      if(type === 'generate'){
+          await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
         variableValues:{
           username: userName,
           userid: userId,
         }
       });
-      
-      // Option 2: If the above fails, try using it as an assistant ID instead
-      // Uncomment the lines below and comment out the lines above if workflow doesn't work
-      /*
-      await vapi.start({
-        assistant: {
-          id: process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID
-        },
-        variableValues: {
-          username: userName,
-          userid: userId,
+     }else{
+      let formattedQuestions = '';
+
+      if(questions){
+        formattedQuestions = questions.map((question: any)=>`- ${question}`).join('\n');
+      }
+
+      await vapi.start(interviewer,{
+        variableValues:{
+          questions: formattedQuestions,
         }
-      });
-      */
+      })
+     }
+      
       
       console.log('Call started successfully');
       

@@ -4,7 +4,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { dummyInterviews } from '@/constants'
 import InterviewCard from '@/components/InterviewCard'
-import { getCurrentUser, getInterviewByUserId, getLatestInterviews } from '@/lib/actions/auth.action'
+import { getCurrentUser } from '@/lib/actions/auth.action'
+import { getInterviewByUserId, getLatestInterviews } from '@/lib/actions/general.actions'
+
 
 
 const page =async () => {
@@ -56,7 +58,7 @@ const page =async () => {
           ))
         ) : (
           <div className='flex flex-col items-center justify-center gap-4'>
-            <Image src="/empty-interviews.png" alt="no-interviews" width={200} height={200} className='object-cover'/>
+            {/* <Image src="/empty-interviews.png" alt="no-interviews" width={200} height={200} className='object-cover'/> */}
             <p className='text-lg text-gray-100'>You have no past interviews yet. Start one now!</p>
           </div>
         )
@@ -78,7 +80,7 @@ const page =async () => {
           ))
         ) : (
           <div className='flex flex-col items-center justify-center gap-4'>
-            <Image src="/empty-interviews.png" alt="no-interviews" width={200} height={200} className='object-cover'/>
+            {/* <Image src="/empty-interviews.png" alt="no-interviews" width={200} height={200} className='object-cover'/> */}
             <p className='text-lg text-gray-100'>There are no upcoming interviews available at the moment. Check back later or start your own interview! <span role="img" aria-label="hourglass">⏳</span>
             </p>
           </div>
@@ -93,3 +95,5 @@ const page =async () => {
 }
 
 export default page
+
+
